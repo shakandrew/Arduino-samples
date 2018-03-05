@@ -26,19 +26,22 @@ It counts from 0 to 9, then digit point lights on and it goes down from 9 to 0.
 Reaching 0 loop repeats.
 
 ## Sample 2:
-Working idea is similar to `SAMPLE1.ino`. 
+Working idea is similar to `SAMPLE1.ino`.
 But we can use serial monitor, which supports commands like :
 
 * `pause on` - pauses (freezes) the LED display, but the counter continues counting.
 * `pause off` - keeps going (unfreeze) the LED display.
 It unfreezes with a current counter value.
+* `delay %time` - set time for showing one numeral
 * `reset`
+* `help` - show help dialog
 
 <h4>Example: </h4>
 You run pause on, when display showed 8, than you have been waiting for 4 seconds and run pause off.
 On the display you will see `7.` : during first second counter counts to `9`,
 second to `9.`, third to `8.` and fourth second `7.`.
 Running `reset` you will reset the loop, and it will be repeated from 0.
+By default time = 1000 (1s), so if you will run `delay 500`, it will start working twice faster.
 
 ## Sample 3:
 
