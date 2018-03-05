@@ -43,6 +43,16 @@ second to `9.`, third to `8.` and fourth second `7.`.
 Running `reset` you will reset the loop, and it will be repeated from 0.
 By default time = 1000 (1s), so if you will run `delay 500`, it will start working twice faster.
 
+<h4>Add your own command:</h4>
+
+* add new enum value in `enum LED_CMD` (eg. `COMMAND`)
+* add `#define COMMAND_STR "command\0"` - max 8 digits
+* add `#define VALUE_STR "val\0"` - max 4 digits
+* add declaration and implementation for `bool check_COMMAND(Command \*)`
+* add `if(check_COMMAND(cmd)) return;` to `initCommand`
+* add `case COMMAND:` to `switch(cmd->led_cmd)` in `loop()`
+
+
 ## Sample 3:
 
 In progress.
