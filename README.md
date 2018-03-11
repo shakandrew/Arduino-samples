@@ -3,7 +3,7 @@ Here you can find samples for Arduino Uno.
 
 Documentation is provided in the `documentation.pdf`
 
-## Sample 1:
+## Sample 1.1:
 You have 8 digit LED display. Digits have such a view:
 
 ```
@@ -25,7 +25,7 @@ So now you can see algorithm in work.
 It counts from 0 to 9, then digit point lights on and it goes down from 9 to 0.
 Reaching 0 loop repeats.
 
-## Sample 2:
+## Sample 1.2:
 Working idea is similar to `SAMPLE1.ino`.
 But we can use serial monitor, which supports commands like :
 
@@ -53,6 +53,6 @@ By default time = 1000 (1s), so if you will run `delay 500`, it will start worki
 * add `case COMMAND:` to `switch(cmd->led_cmd)` in `loop()`
 
 
-## Sample 3:
+## Sample 2.1:
 
 In progress.
