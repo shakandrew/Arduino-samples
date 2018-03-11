@@ -96,10 +96,14 @@ void setup() {
     resetLED(led);
 
     DDRD = DDRD | B11110000; // init PD4-PD7 with OUTPUT
-    DDRB = DDRB | B00001111; // init PB0-PB3 with OUTPUT
+    DDRB = DDRB | B00101111; // init PB0-PB3 with OUTPUT
 }
 
 void loop() {
+    if ( PORTB | B00100000 == PORTB)
+        PORTB = PORTB & B11011111;
+    else
+        PORTB = PORTB | B00100000;
     showLED(led);
     checkForCommands();
     switch (cmd->led_cmd) {
