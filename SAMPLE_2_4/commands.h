@@ -30,15 +30,6 @@ typedef struct {
 void initCMD(CMD& cmd) {
     value = 0;
     cmd = PAUSE;
-    Serial.begin(9600);
-}
-
-void checkForNewCommand(CMD& cmd) {
-    if (Serial.available() > 0) {
-        String str = Serial.readStringUntil('\n');
-        Serial.println("Serial monitor accepted command: " + str);
-        initCommand(cmd, (byte) str.length(), str.c_str());
-    }
 }
 
 void initCommand(CMD& cmd, char *str, byte n) {
@@ -55,40 +46,34 @@ void initCommand(CMD& cmd, char *str, byte n) {
     else error_cmd(cmd);
 }
 
-// TODO fix messages
-void help() {
-    Serial.print("You can use next commands:\n");
-    Serial.print("\"pause on\" - to pause(freeze) the display, but let counter count\n");
-    Serial.print("\"pause off\" - to start the display, it will show current counter numeral\n");
-    Serial.print("\"reset\" - resets counter and numeral show on the display\n");
-    Serial.print("\"help\" - show help\n");
-}
-
-
 void up_cmd(CMD& cmd) {
     if (strtok(NULL, SPLIT_STR)==null)
         cmd.cmd = UP;
     else
         cmd.cmd = ERROR;
 }
+
 void dowm_cmd(CMD& cmd) {
   if (strtok(NULL, SPLIT_STR)==null)
       cmd.cmd = DOWN;
   else
       cmd.cmd = ERROR;
 }
+
 void help_cmd(CMD& cmd) {
   if (strtok(NULL, SPLIT_STR)==null)
       cmd.cmd = HELP;
   else
       cmd.cmd = ERROR;
 }
+
 void reset_cmd(CMD& cmd) {
   if (strtok(NULL, SPLIT_STR)==null)
       cmd.cmd = RESET;
   else
       cmd.cmd = ERROR;
 }
+
 void pause_cmd(CMD& cmd) {
     char* token = strtok(NULL, SPLIT_STR);
     to_lower(token);
@@ -98,6 +83,7 @@ void pause_cmd(CMD& cmd) {
     else cmd.cmd = ERROR;
     if (strtok(NULL, SPLIT_STR)==null) cmd.cmd = ERROR;
 }
+
 void period_cmd(CMD& cmd) {
     token = strtok(NULL, SPLIT_STR);
     int temp = 0;
@@ -109,6 +95,7 @@ void period_cmd(CMD& cmd) {
         temp = temp*10 + token[i]-'0';
     cmd.cmd = PERIOD;
 }
+
 void error_cmd(CMD& cmd) {
     cmd.cmd = ERROR;
 }

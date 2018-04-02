@@ -3,18 +3,19 @@
 #define TMR2_MILL_MAX 1000
 
 typedef struct {
-    short sec;
     short mill;
+    short sec;
+    short period;
 } TMR2;
 
 void initTMR(volatile TMR2& tmr);
 void incTMR(volatile TMR2& tmr);
-void decTMR(volatile TMR2& tmr);
 void setTMR(TMR2& tmr, short sec, short mill);
 
 void initTMR(volatile TMR2& tmr) {
     tmr.sec = 0;
     tmr.mill = 0;
+    tmr.period = 10;
 
     TCCR2A |= _BV(WGM21);
     OCR2A = 0x10;
@@ -23,23 +24,18 @@ void initTMR(volatile TMR2& tmr) {
 }
 
 void incTMR(volatile TMR2& tmr) {
-    tmr.mill++;
+    tmr.mill += tmr.period;
     tmr.sec += tmr.mill/TMR2_MILL_MAX;
     tmr.mill %= TMR2_MILL_MAX;
     tmr.sec %= TMR2_SEC_MAX;
-}
-
-void decTMR(volatile TMR2& tmr) {
-    tmr.mill--;
-    if (tmr.mill < 0) {
+    if (tmr.mill < 0)
         tmr.mill = TMR2_MILL_MAX + tmr.mill;
-        tmr.sec--;
-    }
     if (tmr.sec < 0)
         tmr.sec = TMR2_SEC_MAX + tmr.sec;
 }
 
-void setTMR(TMR2& tmr, short sec, short mill) {
+void setTMR(TMR2& tmr, short sec, short mill, short period) {
     tmr.sec = sec;
     tmr.mill = mill;
+    tmr.period = period;
 }
