@@ -2,7 +2,7 @@ namespace TMR2{
     volatile int TPL; // Timer period limit
     volatile int TPV; // Timer period value
     volatile char TPS; // Timer period sign
-    void (*action)();
+    void (*action)() = NULL;
 
     // public functions
     void set(short period, void (*f)());
@@ -14,8 +14,10 @@ namespace TMR2{
 
 
     void start() {
-        TCNT2 = 0;
-        sei();
+        if (action != NULL) {
+            TCNT2 = 0;
+            sei();
+        }
     }
 
     void finish() {
