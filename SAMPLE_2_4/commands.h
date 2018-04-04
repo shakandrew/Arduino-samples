@@ -50,7 +50,7 @@ void up_cmd(CMD& cmd) {
     if (strtok(NULL, SPLIT_STR)==null)
         cmd.cmd = UP;
     else
-        cmd.cmd = ERROR;
+        cmcmd = ERROR;
 }
 
 void dowm_cmd(CMD& cmd) {

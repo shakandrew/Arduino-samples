@@ -2,18 +2,12 @@
 #include "led_display.h"
 #include "commands.h"
 
-volatile TMR2 tmr;
 LED led;
 CMD cmd;
-
-ISR (TIMER2_COMPA_vect) {
-    incTMR(tmr);
-}
 
 void setup() {
     Serial.begin(9600);
     initCMD(cmd);
-    initTMR(tmr);
     initLED(led);
     sei();
 }

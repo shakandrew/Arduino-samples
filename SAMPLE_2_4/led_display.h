@@ -22,7 +22,6 @@ typedef struct {
 } LED;
 
 void initLED(LED& led);
-void updateLEDTime(LED& led, volatile TMR2& tmr);
 void turnLED(LED& led);
 void nextLED(LED& led);
 void turnLight(byte led_index, byte numeral);
@@ -35,10 +34,6 @@ void initLED(LED& led){
     DDRB |= B00001111; // init PB0-PB3 with OUTPUT | segments e,f,g,dp
 
     DDRC |= B00001111; // set PC0 - PC3 with OUTPUT | groud for leds 0,1,2,3
-}
-
-void updateLEDTime(LED& led, volatile TMR2& tmr) {
-    led.led_time = tmr.sec * 100 + tmr.mill / 10;
 }
 
 void turnLED(LED& led){
