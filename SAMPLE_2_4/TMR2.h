@@ -12,7 +12,6 @@ namespace TMR2{
     // private functions
     void inc();
 
-
     void start() {
         if (action != NULL) {
             TCNT2 = 0;
