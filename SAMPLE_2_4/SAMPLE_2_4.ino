@@ -14,6 +14,7 @@ void checkForNewCommand(CMD::COMMAND& cmd);
 void  pause(CMD::COMMAND&), period(CMD::COMMAND&),
 reset(), error(), up(), down(), help();
 
+int temp_period=0;
 Display display;
 CMD::COMMAND cmd;
 
@@ -28,18 +29,15 @@ void setup() {
         TMR2::set(10, looper);
         TMR2::start();
 }
-/*
-   TODO
- */
 void loop() {
         CMD::COMMAND temp;
         CMD::checkForNewCommand(temp);
-        if (temp.cmd == PAUSE) pause();
-        else if (temp.cmd == RESET) reset();
-        else if (temp.cmd == UP) up();
-        else if (temp.cmd == DOWN) down();
-        else if (temp.cmd == HELP) help();
-        else if (temp.cmd == PERIOD) period(temp);
+        if (temp.cmd == CMD::PAUSE) pause(temp);
+        else if (temp.cmd == CMD::RESET) reset();
+        else if (temp.cmd == CMD::UP) up();
+        else if (temp.cmd == CMD::DOWN) down();
+        else if (temp.cmd == CMD::HELP) help();
+        else if (temp.cmd == CMD::PERIOD) period(temp);
         else error();
 }
 
@@ -57,6 +55,35 @@ void checkForNewCommand(COMMAND& cmd) {
         }
 }
 
+void pause(CMD::COMMAND& arg){
+        if (arg.value && !cmd.value) {
+                temp_period = display.period;
+                display.period = 0;
+        }
+        if (!arg.value && cmd.value) {
+                display.period = temp_period;
+        }
+        cmd = arg;
+}
+void reset() {
+        display.value = 0;
+        cmd.cmd = CMD::PAUSE;
+        cmd.value = 0;
+}
+void up() {
+        display.value = abs(display.value);
+        cmd.cmd = CMD::PAUSE;
+        cmd.value = 0;
+}
+void down() {
+        display.value = -abs(display.value);
+        cmd.cmd = CMD::PAUSE;
+        cmd.value = 0;
+}
+void period(CMD::COMMAND& arg) {
+        display.value = arg.value;
+        CMD::set(display.value, looper);
+}
 void error() {
         Serial.println("[ERROR]: Bad command.");
         Serial.println("Try \"help\" to get more info");
