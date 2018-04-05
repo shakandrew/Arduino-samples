@@ -1,59 +1,62 @@
 #include "timer2.h"
 #include "led_display.h"
 #include "commands.h"
+#define MAX_DISP_VALUE;
 
-LED led;
-CMD cmd;
+typedef struct {
+    volatile int period;
+    volatile int value;
+    byte index;
+} Display;
+
+void looper();
+void checkForNewCommand(CMD::COMMAND& cmd);
+void  pause(CMD::COMMAND&), period(CMD::COMMAND&),
+      reset(), error(), up(), down(), help();
+
+Display display;
+CMD::COMMAND cmd;
 
 void setup() {
     Serial.begin(9600);
-    initCMD(cmd);
-    initLED(led);
-    sei();
-}
-/* TODO
-  period must change led values
 
-*/
+    CMD::init(cmd);
+
+    LEDS::init();
+
+    TMR2::init();
+    TMR2::set(10, looper);
+    TMR2::start();
+}
+
 void loop() {
-    CMD temp;
-    checkForNewCommand(temp);
-    switch (temp.cmd) {
-        case PAUSE:
-            cmd = temp;
-            if (!cmd.value) {
-              cli();
-              updateLEDTime(led, tmr);
-              sei();
-            }
-        case RESET:
-            cmd = temp;
-            setTMR(tmr, 0, 0, 10)
-        case UP:
-
-        case DOWN:
-
-        case PERIOD:
-
-        case HELP:
-            help();
-        case ERROR:
-            errorBadCommand();
-    }
-    turnLED(led);
-    nextLED(led);
+    CMD::COMMAND temp;
+    CMD::checkForNewCommand(temp);
+    if (temp.cmd == PAUSE) pause()
+    else if (temp.cmd == PAUSE) pause(temp);
+    else if (temp.cmd == RESET) reset();
+    else if (temp.cmd == UP) up();
+    else if (temp.cmd == DOWN) down();
+    else if (temp.cmd == HELP) help();
+    else if (temp.cmd == PERIOD) period(temp);
+    else error();
 }
 
+void looper(){
+    display.value = (display.value + display.period) % MAX_DISP_VALUE;
+    if (display.value<0)
+        display.value = MAX_DISP_VALUE - display.value;
+}
 
-void checkForNewCommand(CMD& cmd) {
+void checkForNewCommand(COMMAND& cmd) {
     if (Serial.available() > 0) {
         String str = Serial.readStringUntil('\n');
         Serial.println("Serial monitor accepted command: " + str);
-        initCommand(cmd, (byte) str.length(), str.c_str());
+        CMD::checkCommand(cmd, (byte) str.length(), str.c_str());
     }
 }
 
-void errorBadCommand() {
+void error() {
     Serial.println("[ERROR]: Bad command.");
     Serial.println("Try \"help\" to get more info");
 }
