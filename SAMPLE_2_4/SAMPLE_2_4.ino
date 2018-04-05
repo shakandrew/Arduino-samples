@@ -1,101 +1,121 @@
 #include "TMR2.h"
 #include "LEDS.h"
 #include "CMD.h"
-#define MAX_DISP_VALUE;
+#define MAX_DISP_VALUE 100000
+#define DEFAULT_PERIOD 500
 
 typedef struct {
-        volatile int period;
-        volatile int value;
-        byte index;
+    volatile long int period;
+    volatile long int value;
 } Display;
 
-void looper();
-void checkForNewCommand(CMD::COMMAND& cmd);
-void  pause(CMD::COMMAND&), period(CMD::COMMAND&),
-reset(), error(), up(), down(), help();
+// Functions
+void looper(),
+     checkForNewCommand(CMD::COMMAND& cmd),
+     pause(CMD::COMMAND&),
+     period(CMD::COMMAND&),
+     reset(),
+     error(),
+     up(),
+     down(),
+     help();
 
-int temp_period=0;
-Display display;
-CMD::COMMAND cmd;
+// Variables
+long int temp_period = 0;
+Display display = {DEFAULT_PERIOD, 0};
+CMD::COMMAND cmd = {0, CMD::PAUSE};
+byte led_index = 0;
 
 void setup() {
-        Serial.begin(9600);
+    Serial.begin(9600);
 
-        CMD::init(cmd);
+    LEDS::init();
 
-        LEDS::init();
+    TMR2::init();
+    TMR2::set(DEFAULT_PERIOD, looper);
+    TMR2::start();
 
-        TMR2::init();
-        TMR2::set(10, looper);
-        TMR2::start();
+    help();
 }
 void loop() {
-        CMD::COMMAND temp;
-        CMD::checkForNewCommand(temp);
-        if (temp.cmd == CMD::PAUSE) pause(temp);
-        else if (temp.cmd == CMD::RESET) reset();
-        else if (temp.cmd == CMD::UP) up();
-        else if (temp.cmd == CMD::DOWN) down();
-        else if (temp.cmd == CMD::HELP) help();
-        else if (temp.cmd == CMD::PERIOD) period(temp);
-        else error();
+
+    CMD::COMMAND temp;
+    checkForNewCommand(temp);
+    if (temp.cmd == CMD::PAUSE) pause(temp);
+    else if (temp.cmd == CMD::RESET) reset();
+    else if (temp.cmd == CMD::UP) up();
+    else if (temp.cmd == CMD::DOWN) down();
+    else if (temp.cmd == CMD::HELP) help();
+    else if (temp.cmd == CMD::PERIOD) period(temp);
+    else error();
+
+    byte val;
+    if (led_index == 0) val = (display.value / 10) % 10;
+    if (led_index == 1) val = (display.value / 100) % 10;
+    if (led_index == 2) val = (display.value / 1000) % 10;
+    if (led_index == 3) val = (display.value / 10000) % 10;
+    LEDS::turnLEDOn(led_index, val);
+    led_index = ++led_index % 4;
 }
 
-void looper(){
-        display.value = (display.value + display.period) % MAX_DISP_VALUE;
-        if (display.value<0)
-                display.value = MAX_DISP_VALUE - display.value;
+void looper() {
+    display.value = (display.value + display.period) % MAX_DISP_VALUE;
+    if (display.value < 0)
+        display.value = MAX_DISP_VALUE + display.value;
 }
 
-void checkForNewCommand(COMMAND& cmd) {
-        if (Serial.available() > 0) {
-                String str = Serial.readStringUntil('\n');
-                Serial.println("Serial monitor accepted command: " + str);
-                CMD::checkCommand(cmd, (byte) str.length(), str.c_str());
-        }
+void checkForNewCommand(CMD::COMMAND& arg) {
+    if (Serial.available() > 0) {
+        String str = Serial.readStringUntil('\n');
+        Serial.println("Serial monitor accepted command: " + str);
+        CMD::checkCommand(arg, (byte)str.length(), str.c_str());
+    }
+    else {
+        arg.value = cmd.value;
+        arg.cmd = cmd.cmd;
+    }
 }
 
-void pause(CMD::COMMAND& arg){
-        if (arg.value && !cmd.value) {
-                temp_period = display.period;
-                display.period = 0;
-        }
-        if (!arg.value && cmd.value) {
-                display.period = temp_period;
-        }
-        cmd = arg;
+void pause(CMD::COMMAND& arg) {
+    if (arg.value && !cmd.value) {
+        temp_period = display.period;
+        display.period = 0;
+    }
+    if (!arg.value && cmd.value) {
+        display.period = temp_period;
+    }
+    cmd = arg;
 }
 void reset() {
-        display.value = 0;
-        cmd.cmd = CMD::PAUSE;
-        cmd.value = 0;
+    display.value = 0;
+    display.period = DEFAULT_PERIOD;
+    cmd.cmd = CMD::PAUSE;
+    cmd.value = 0;
 }
 void up() {
-        display.value = abs(display.value);
-        cmd.cmd = CMD::PAUSE;
-        cmd.value = 0;
+    display.period = abs(display.period);
+    temp_period = abs(temp_period);
 }
 void down() {
-        display.value = -abs(display.value);
-        cmd.cmd = CMD::PAUSE;
-        cmd.value = 0;
+    display.period = -abs(display.period);
+    temp_period = -abs(temp_period);
 }
 void period(CMD::COMMAND& arg) {
-        display.value = arg.value;
-        CMD::set(display.value, looper);
+    display.period = arg.value;
+    TMR2::set(display.period, looper);
 }
 void error() {
-        Serial.println("[ERROR]: Bad command.");
-        Serial.println("Try \"help\" to get more info");
+    Serial.println("[ERROR]: Bad command.");
+    Serial.println("Try \"help\" to get more info");
 }
 
 void help() {
-        Serial.println("You can use next commands:");
-        Serial.println("\"pause on\" - to pause(freeze) the display, but let counter count");
-        Serial.println("\"pause off\" - to start the display, it will show current counter numeral");
-        Serial.println("\"up\" - to count incrementing");
-        Serial.println("\"down\" - to count decrementing");
-        Serial.println("\"period XXXX\" - set period of refreshing the screen to XXXX\nEx \"period 1234\" - sets period 12 sec 340 mills");
-        Serial.println("\"reset\" - resets counter and numeral show on the display");
-        Serial.println("\"help\" - show help");
+    Serial.println("You can use next commands:");
+    Serial.println("\"pause on\" - to pause(freeze) the display, but let counter count");
+    Serial.println("\"pause off\" - to start the display, it will show current counter numeral");
+    Serial.println("\"up\" - to count incrementing");
+    Serial.println("\"down\" - to count decrementing");
+    Serial.println("\"period XXXX\" - set period of refreshing the screen to XXXX\nEx \"period 1234\" - sets period 12 sec 340 mills");
+    Serial.println("\"reset\" - resets counter and numeral show on the display");
+    Serial.println("\"help\" - show help");
 }
