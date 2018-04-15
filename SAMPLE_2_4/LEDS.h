@@ -1,11 +1,12 @@
+#include <avr/pgmspace.h>
+
 #define PORTD_UPDATE(num) B00001111|(num<<4)
 #define PORTC_UPDATE(index) B00001111^(1<<index)
 #define PORTB_UPDATE(num) B11110000|(num>>4)
 
-
 namespace LEDS {
 
-const byte numerals[] = {
+const byte numerals[] PROGMEM = {
     B00111111, /* 0 */
     B00000110, /* 1 */
     B01011011, /* 2 */
@@ -29,7 +30,7 @@ void init() {
 }
 
 void turnLEDOn(byte led_index, byte numeral_index) {
-    byte numeral = numerals[numeral_index];
+    byte numeral = pgm_read_byte(&numerals[numeral_index]);
     if (led_index == 2) numeral += B10000000;
     PORTD = PORTD_UPDATE(numeral);
     PORTB = PORTB_UPDATE(numeral);

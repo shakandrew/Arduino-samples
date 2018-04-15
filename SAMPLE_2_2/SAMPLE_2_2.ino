@@ -14,7 +14,7 @@ const byte numerals[] = {
     B01111101, /* 6 */
     B00000111, /* 7 */
     B01111111, /* 8 */
-    B01101111  /* 9 */ 
+    B01101111  /* 9 */
 };
 
 volatile short led_value = 0;

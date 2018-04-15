@@ -123,7 +123,6 @@ ISR (TIMER2_COMPA_vect) {
 }
 
 void setup() {
-        //Serial.begin(9600);
         initTMR(tmr);
         initLED(led);
         sei();
@@ -133,7 +132,6 @@ void loop() {
         cli();
         updateLEDTime(led, tmr);
         sei();
-        //Serial.println(tmr.sec);
         turnLED(led);
         nextLED(led);
 }

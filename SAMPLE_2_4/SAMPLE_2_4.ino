@@ -1,6 +1,7 @@
 #include "TMR2.h"
 #include "LEDS.h"
 #include "CMD.h"
+#include <avr/pgmspace.h>
 #define MAX_DISP_VALUE 100000
 #define DEFAULT_PERIOD 500
 
@@ -67,7 +68,8 @@ void looper() {
 void checkForNewCommand(CMD::COMMAND& arg) {
     if (Serial.available() > 0) {
         String str = Serial.readStringUntil('\n');
-        Serial.println("Serial monitor accepted command: " + str);
+        Serial.print(F("Serial monitor accepted command: "));
+        Serial.println(str);
         CMD::checkCommand(arg, (byte)str.length(), str.c_str());
     }
     else {
@@ -105,17 +107,17 @@ void period(CMD::COMMAND& arg) {
     TMR2::set(display.period, looper);
 }
 void error() {
-    Serial.println("[ERROR]: Bad command.");
-    Serial.println("Try \"help\" to get more info");
+    Serial.println(F("[ERROR]: Bad command."));
+    Serial.println(F("Try \"help\" to get more info"));
 }
 
 void help() {
-    Serial.println("You can use next commands:");
-    Serial.println("\"pause on\" - to pause(freeze) the display, but let counter count");
-    Serial.println("\"pause off\" - to start the display, it will show current counter numeral");
-    Serial.println("\"up\" - to count incrementing");
-    Serial.println("\"down\" - to count decrementing");
-    Serial.println("\"period XXXX\" - set period of refreshing the screen to XXXX\nEx \"period 1234\" - sets period 12 sec 340 mills");
-    Serial.println("\"reset\" - resets counter and numeral show on the display");
-    Serial.println("\"help\" - show help");
+    Serial.println(F("You can use next commands:"));
+    Serial.println(F("\"pause on\" - to pause(freeze) the display, but let counter count"));
+    Serial.println(F("\"pause off\" - to start the display, it will show current counter numeral"));
+    Serial.println(F("\"up\" - to count incrementing"));
+    Serial.println(F("\"down\" - to count decrementing"));
+    Serial.println(F("\"period XXXX\" - set period of refreshing the screen to XXXX\nEx \"period 1234\" - sets period 12 sec 340 mills"));
+    Serial.println(F("\"reset\" - resets counter and numeral show on the display"));
+    Serial.println(F("\"help\" - show help"));
 }

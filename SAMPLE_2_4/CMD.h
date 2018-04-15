@@ -53,9 +53,9 @@ void checkCommand(COMMAND& cmd, byte n, char *str) {
         return;
     }
 
-    
+
     if (strtok(NULL, SPLIT_STR) != NULL) error_cmd(cmd);
-    
+
     if (!strcmp(token, DOWN_STR)) down_cmd(cmd);
     else if (!strcmp(token, HELP_STR)) help_cmd(cmd);
     else if (!strcmp(token, UP_STR)) up_cmd(cmd);
