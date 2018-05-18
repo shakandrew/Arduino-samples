@@ -10,7 +10,6 @@
 #include <stdint.h>
 
 // Defaults block
-#define RD02_I2C_ADDRESS byte((0xB0) >> 1)
 
 #define SPEED1_REGISTER byte(0) // mode 0,1
 #define SPEED2_REGISTER byte(1) // mode 0,1
@@ -50,7 +49,7 @@ class MOVE_RD02
 {
 public:
     int8_t address;
-    MOVE_RD02();
+    MOVE_RD02(int8_t);
     ~MOVE_RD02();
 
     void moveForward();
