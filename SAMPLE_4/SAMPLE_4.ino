@@ -6,7 +6,7 @@
 #include <LCD03.h>
 
 #include "MOVE_RD02.h"
-#include "TMR2.h"
+#include "TMR1.h"
 
 #define RD02_I2C_ADDRESS byte((0xB0) >> 1)
 #define REFRESH_LIMIT 10000
@@ -28,8 +28,11 @@ char lcd_display_mdg[32] =
     { 'M', '1', ':', ' ', '.', ' ', ' ', ' ', 'H', 'H', ':', 'M', 'M', ':', 'S', 'S',
       'M', '2', ':', ' ', '.', ' ', ' ', ' ', 'D', 'D', '/', 'M', 'M', '/', 'Y', 'Y' };
 
-volatile uint16_t inter;
+volatile uint32_t inter=0;
 
+void looper() {
+    inter++;
+}
 
 void setup()
 {
@@ -49,9 +52,9 @@ void setup()
     lcd.print("Prease, send the time to Arduino");
 
     // lcd cant work in interuptions
-    // TMR2::init();
-    // TMR2::set(1000, updateLCD);
-    // TMR2::start();
+    TMR1::init();
+    TMR1::set(1, looper);
+    TMR1::start();
 }
 
 void loop()
@@ -75,36 +78,42 @@ void refreshLCD()
     refresh_lcd = (refresh_lcd + 1) % REFRESH_LIMIT;
     if (refresh_lcd == 0)
     {
-        float speed1 = getSpeed1();
-        float speed2 = getSpeed2();
+        {
+            lcd.home();
+            lcd.print(inter);
+        }
+        {
+            float speed1 = getSpeed1();
+            float speed2 = getSpeed2();
 
-        lcd_display_mdg[3] = getDigitFromDouble(speed1, 0);
-        lcd_display_mdg[5] = getDigitFromDouble(speed1, 0);
-        lcd_display_mdg[6] = getDigitFromDouble(speed1, -1);
+            lcd_display_mdg[3] = getDigitFromDouble(speed1, 0);
+            lcd_display_mdg[5] = getDigitFromDouble(speed1, 0);
+            lcd_display_mdg[6] = getDigitFromDouble(speed1, -1);
 
-        lcd_display_mdg[8] = '0' + hour() / 10;
-        lcd_display_mdg[9] = '0' + hour() % 10;
+            lcd_display_mdg[8] = '0' + hour() / 10;
+            lcd_display_mdg[9] = '0' + hour() % 10;
 
-        lcd_display_mdg[11] = '0' + minute() / 10;
-        lcd_display_mdg[12] = '0' + minute() % 10;
+            lcd_display_mdg[11] = '0' + minute() / 10;
+            lcd_display_mdg[12] = '0' + minute() % 10;
 
-        lcd_display_mdg[14] = '0' + second() / 10;
-        lcd_display_mdg[15] = '0' + second() % 10;
+            lcd_display_mdg[14] = '0' + second() / 10;
+            lcd_display_mdg[15] = '0' + second() % 10;
 
-        lcd_display_mdg[19] = getDigitFromDouble(speed2, 0);
-        lcd_display_mdg[21] = getDigitFromDouble(speed2, 0);
-        lcd_display_mdg[22] = getDigitFromDouble(speed2, -1);
+            lcd_display_mdg[19] = getDigitFromDouble(speed2, 0);
+            lcd_display_mdg[21] = getDigitFromDouble(speed2, 0);
+            lcd_display_mdg[22] = getDigitFromDouble(speed2, -1);
 
-        lcd_display_mdg[24] = '0' + day() / 10;
-        lcd_display_mdg[25] = '0' + day() % 10;
+            lcd_display_mdg[24] = '0' + day() / 10;
+            lcd_display_mdg[25] = '0' + day() % 10;
 
-        lcd_display_mdg[27] = '0' + month() / 10;
-        lcd_display_mdg[28] = '0' + month() % 10;
+            lcd_display_mdg[27] = '0' + month() / 10;
+            lcd_display_mdg[28] = '0' + month() % 10;
 
-        lcd_display_mdg[30] = '0' + (year() / 10) % 10;
-        lcd_display_mdg[31] = '0' + year() % 10;
+            lcd_display_mdg[30] = '0' + (year() / 10) % 10;
+            lcd_display_mdg[31] = '0' + year() % 10;
 
-        lcd.print(lcd_display_mdg);
+            lcd.print(lcd_display_mdg);
+        }
     }
 }
 

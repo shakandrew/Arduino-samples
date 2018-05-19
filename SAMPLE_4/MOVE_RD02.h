@@ -64,7 +64,7 @@ public:
 
     void spinRigth();
     void spinLeft();
-    void spin(int8_t, int8_t);
+    void spin(int8_t);
 
     void stopRD();
 
@@ -80,6 +80,7 @@ public:
     void writeRegister(int8_t, int8_t);
     int8_t readRegister(int8_t);
 
+    int64_t readRegister(int8_t, int8_t);
     void changeMode();
 };
 
@@ -95,7 +96,7 @@ MOVE_RD02::~MOVE_RD02()
 // Move Forward
 void MOVE_RD02::moveForward()
 {
-    mForward(DEFAULT_FORWARD_SREED);
+    moveForward(DEFAULT_FORWARD_SREED);
 }
 void MOVE_RD02::moveForward(int8_t speed)
 {
@@ -107,7 +108,7 @@ void MOVE_RD02::moveForward(int8_t speed)
 // Move Backward
 void MOVE_RD02::moveBackward()
 {
-    mBackward(DEFAULT_BACKWARD_SREED);
+    moveBackward(DEFAULT_BACKWARD_SREED);
 }
 void MOVE_RD02::moveBackward(int8_t speed)
 {
@@ -202,7 +203,7 @@ void MOVE_RD02::writeRegister(int8_t reg, int8_t value)
 {
     Wire.beginTransmission(address);
     Wire.write(reg);
-    Wire.write(mod);
+    Wire.write(value);
     Wire.endTransmission();
 }
 
