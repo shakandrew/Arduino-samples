@@ -35,8 +35,8 @@
 #define DEFAULT_FORWARD_SREED int8_t(64)
 #define DEFAULT_BACKWARD_SREED int8_t(-64)
 
-#define DEFAULT_RTURN_SPEED int8_t(-32)
-#define DEFAULT_LTURN_SPEED int8_t(32)
+#define DEFAULT_RTURN_SPEED int8_t(32)
+#define DEFAULT_LTURN_SPEED int8_t(-32)
 
 #define DEFAULT_RSPIN_SPEED int8_t(64)
 #define DEFAULT_LSPIN_SPEED int8_t(-64)
@@ -167,26 +167,12 @@ void MOVE_RD02::setSpeed2(int8_t speed)
 
 int8_t MOVE_RD02::getSpeed1()
 {
-    Wire.beginTransmission(address);
-    Wire.write(SPEED1_REGISTER);
-    Wire.endTransmission();
-
-    Wire.requestFrom(address, byte(1));
-    while (!Wire.available())
-        ;
-    return Wire.read();
+    return (int8_t)readRegister(SPEED1_REGISTER, 1);
 }
 
 int8_t MOVE_RD02::getSpeed2()
 {
-    Wire.beginTransmission(address);
-    Wire.write(SPEED2_REGISTER);
-    Wire.endTransmission();
-
-    Wire.requestFrom(address, byte(1));
-    while (!Wire.available())
-        ;
-    return Wire.read();
+    return (int8_t)readRegister(SPEED2_REGISTER, 1);
 }
 
 int32_t MOVE_RD02::getENC1()

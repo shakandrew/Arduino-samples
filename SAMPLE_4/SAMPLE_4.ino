@@ -8,8 +8,15 @@
 #include "MOVE_RD02.h"
 #include "TMR1.h"
 
+#define M_PI 3.14159265
 #define RD02_I2C_ADDRESS byte((0xB0) >> 1)
-#define REFRESH_LIMIT 10000
+#define REFRESH_LIMIT 3000
+#define WHEEL_RADIUS 0.048
+#define TO_RADS(n) (n * M_PI / 180)
+#define INTER_PERIOD 1
+#define CALL_FREQUENCY (double)INTER_PERIOD / 1000 
+#define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
+#define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
 
 MOVE_RD02 motor(RD02_I2C_ADDRESS);
 
@@ -18,17 +25,19 @@ uint16_t refresh_lcd = 0;
 
 // TODO change vars in the interuption
 
-volatile int32_t m1_ticks_prev;
-volatile int32_t m1_ticks_curr;
+volatile int32_t m1_ticks_prev=0;
+volatile int32_t m1_ticks_curr=0;
 
-volatile int32_t m2_ticks_prev;
-volatile int32_t m2_ticks_curr;
+volatile int32_t m2_ticks_prev=0;
+volatile int32_t m2_ticks_curr=0;
 
 char lcd_display_mdg[32] =
     { 'M', '1', ':', ' ', '.', ' ', ' ', ' ', 'H', 'H', ':', 'M', 'M', ':', 'S', 'S',
       'M', '2', ':', ' ', '.', ' ', ' ', ' ', 'D', 'D', '/', 'M', 'M', '/', 'Y', 'Y' };
 
 volatile uint32_t inter=0;
+uint32_t inter_start_ts=0;
+uint32_t inter_end_ts=0;
 
 void looper() {
     inter++;
@@ -51,9 +60,11 @@ void setup()
     lcd.clear();
     lcd.print("Prease, send the time to Arduino");
 
+    m1_ticks_curr = 0;
+    m2_ticks_curr = 0;
     // lcd cant work in interuptions
     TMR1::init();
-    TMR1::set(1, looper);
+    TMR1::set(INTER_PERIOD, looper);
     TMR1::start();
 }
 
@@ -65,30 +76,42 @@ void loop()
             processSyncMessage();
     }
     else
-    {
+    {   
         if (Serial.available())
             command();
         else
-            refreshLCD();
+            refreshData();
     }
 }
 
-void refreshLCD()
+void refreshData()
 {
     refresh_lcd = (refresh_lcd + 1) % REFRESH_LIMIT;
     if (refresh_lcd == 0)
     {
         {
-            lcd.home();
-            lcd.print(inter);
+            inter_start_ts = inter_end_ts;
+            inter_end_ts = inter;
+            
+            m1_ticks_prev = m1_ticks_curr;
+            m1_ticks_curr = motor.getENC1();
+                
+            m2_ticks_prev = m2_ticks_curr;
+            m2_ticks_curr = motor.getENC2();
         }
         {
-            float speed1 = getSpeed1();
-            float speed2 = getSpeed2();
+            float speed1 = getSpeed( MAX(m1_ticks_prev, m1_ticks_curr), MIN(m1_ticks_prev, m1_ticks_curr) );
+            float speed2 = getSpeed( MAX(m2_ticks_prev, m2_ticks_curr), MIN(m2_ticks_prev, m2_ticks_curr) );
 
-            lcd_display_mdg[3] = getDigitFromDouble(speed1, 0);
-            lcd_display_mdg[5] = getDigitFromDouble(speed1, 0);
-            lcd_display_mdg[6] = getDigitFromDouble(speed1, -1);
+            if (m1_ticks_curr>m1_ticks_prev)
+                lcd_display_mdg[3] = '+';
+            if (m1_ticks_curr<m1_ticks_prev)
+                lcd_display_mdg[3] = '-';
+            if (m1_ticks_curr==m1_ticks_prev)
+                lcd_display_mdg[3] = '0';
+                
+            lcd_display_mdg[5] = getDigitFromDouble(speed1, -1);
+            lcd_display_mdg[6] = getDigitFromDouble(speed1, -2);
 
             lcd_display_mdg[8] = '0' + hour() / 10;
             lcd_display_mdg[9] = '0' + hour() % 10;
@@ -99,9 +122,15 @@ void refreshLCD()
             lcd_display_mdg[14] = '0' + second() / 10;
             lcd_display_mdg[15] = '0' + second() % 10;
 
-            lcd_display_mdg[19] = getDigitFromDouble(speed2, 0);
-            lcd_display_mdg[21] = getDigitFromDouble(speed2, 0);
-            lcd_display_mdg[22] = getDigitFromDouble(speed2, -1);
+            if (m2_ticks_curr>m2_ticks_prev)
+                lcd_display_mdg[19] = '+';
+            if (m2_ticks_curr<m2_ticks_prev)
+                lcd_display_mdg[19] = '-';
+            if (m2_ticks_curr==m2_ticks_prev)
+                lcd_display_mdg[19] = '0';
+                
+            lcd_display_mdg[21] = getDigitFromDouble(speed2, -1);
+            lcd_display_mdg[22] = getDigitFromDouble(speed2, -2);
 
             lcd_display_mdg[24] = '0' + day() / 10;
             lcd_display_mdg[25] = '0' + day() % 10;
@@ -144,18 +173,16 @@ void processSyncMessage()
 
 void command()
 {
-    if (Serial.available())
-    {
         String temp = Serial.readStringUntil('\n');
         const char* str = temp.c_str();
         Serial.print("Accepted string: ");
         Serial.println(str);
+        
         if (strcmp(str, "forward\0") == 0)
         {
             motor.moveForward();
-            Serial.println("Forward");
         }
-        if (strcmp(str, "backwards\0") == 0)
+        if (strcmp(str, "backward\0") == 0)
         {
             motor.moveBackward();
         }
@@ -163,7 +190,7 @@ void command()
         {
             motor.turnLeft();
         }
-        if (strcmp(str, "rigth\0") == 0)
+        if (strcmp(str, "right\0") == 0)
         {
             motor.turnRigth();
         }
@@ -171,19 +198,19 @@ void command()
         {
             motor.spinLeft();
         }
-        if (strcmp(str, "spinrigth\0") == 0)
+        if (strcmp(str, "spinright\0") == 0)
         {
             motor.spinRigth();
         }
         if (strcmp(str, "stop\0") == 0)
         {
             motor.stopRD();
-        }
-        /*if(strcmp(str, "speed1\0") == 0){
-          motor.getSpeed1();
+        }/*
+        if(strcmp(str, "speed1\0") == 0){
+            Serial.println(motor.getSpeed1());
         }
         if(strcmp(str, "speed2\0") == 0){
-          motor.getSpeed2();
+          Serial.println(motor.getSpeed2());
         }
         if(strcmp(str, "mode\0") == 0){
           motor.writeRegister(0x2, 0xF);
@@ -210,22 +237,38 @@ void command()
 
           byte ret = motor.readRegister(15);
           Serial.println(ret);
-
-        }*/
-    }
+        }
+        if (strcmp(str, "data\0") == 0)
+        {
+            Serial.print("inter_start_ts: ");
+            Serial.println(inter_start_ts);
+            Serial.print("inter_end_ts: ");
+            Serial.println(inter_end_ts);
+            
+            Serial.print("m1_ticks_prev: ");
+            Serial.println(m1_ticks_prev);
+            Serial.print("m1_ticks_curr: ");
+            Serial.println(m1_ticks_curr); 
+            Serial.print("motor.getENC1(): ");
+            Serial.println(motor.getENC1());                       
+        }
+        */
 }
 
 // TODO change to normal one
-float getSpeed1()
+float getSpeed(int32_t bigger, int32_t smaller)
 {
-    return m1_ticks_curr - m1_ticks_prev;
+    float delta_ts = (inter_end_ts - inter_start_ts) * CALL_FREQUENCY;
+
+    float delta = 0;
+    
+    if ( ( (uint32_t)bigger - (uint32_t)smaller) > INT32_MAX )
+        delta = (INT32_MAX - bigger) + (smaller - INT32_MIN);
+    else
+        delta = bigger - smaller;
+    return (TO_RADS(delta) / delta_ts) * WHEEL_RADIUS;
 }
 
-// TODO change to normal one
-float getSpeed2()
-{
-    return m2_ticks_curr - m2_ticks_prev;
-}
 
 int power(int num, int num_power)
 {
