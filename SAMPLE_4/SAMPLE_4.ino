@@ -10,10 +10,11 @@
 #define REFRESH_LIMIT 3000
 #define WHEEL_RADIUS 0.048
 #define TO_RADS(n) (n * M_PI / 180)
-#define timer_PERIOD 1
-#define CALL_FREQUENCY (double)timer_PERIOD / 1000
-#define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
-#define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
+#define TIMER_PERIOD 1
+#define SEC_PERIOD (double)TIMER_PERIOD / 1000
+#define MAX(A,B)  (A>B?A:B)
+#define MIN(A,B)  (A>B?B:A)
+
 
 MOVE_RD02 motor(RD02_I2C_ADDRESS);
 
@@ -61,7 +62,7 @@ void setup()
     timer = 0;
     // lcd cant work in interuptions
     TMR1::init();
-    TMR1::set(timer_PERIOD, looper);
+    TMR1::set(TIMER_PERIOD, looper);
     TMR1::start();
 }
 
@@ -97,8 +98,8 @@ void refreshData()
             m2_ticks_curr = motor.getENC2();
         }
         {
-            float speed1 = getSpeed( MAX(m1_ticks_prev, m1_ticks_curr), MIN(m1_ticks_prev, m1_ticks_curr) );
-            float speed2 = getSpeed( MAX(m2_ticks_prev, m2_ticks_curr), MIN(m2_ticks_prev, m2_ticks_curr) );
+            float speed1 = getSpeed( m1_ticks_prev, m1_ticks_curr );
+            float speed2 = getSpeed( m2_ticks_prev, m2_ticks_curr );
 
             if (m1_ticks_curr>m1_ticks_prev)
                 lcd_display_msg[3] = '+';
@@ -166,6 +167,7 @@ void processSyncMessage()
 
     lcd.home();
     lcd.print(lcd_display_msg);
+    help();
 }
 
 void command()
@@ -202,6 +204,10 @@ void command()
         if (strcmp(str, "stop\0") == 0)
         {
             motor.stopRD();
+        }
+        if (strcmp(str, "help\0") == 0)
+        {
+            help();
         }/*
         if(strcmp(str, "speed1\0") == 0){
             Serial.println(motor.getSpeed1());
@@ -251,17 +257,31 @@ void command()
         }
         */
 }
+// TODO change staff here
 
-float getSpeed(int32_t bigger, int32_t smaller)
+float getSpeed(int32_t prev, int32_t curr)
 {
-    float delta_ts = (timer_curr - timer_prev) * CALL_FREQUENCY;
-
+    float delta_ts = (timer_curr - timer_prev) * SEC_PERIOD;
     float delta = 0;
 
-    if ( ( (uint32_t)bigger - (uint32_t)smaller) > INT32_MAX )
-        delta = (INT32_MAX - bigger) + (smaller - INT32_MIN);
+    if (prev < curr) {
+        if ( curr > INT32_MAX / 2 && prev < INT32_MIN/2 )
+            delta = (INT32_MAX - curr) + (prev - INT32_MIN);
+        else
+            delta = abs(curr - prev);
+    } else {
+      if ( prev > INT32_MAX / 2 && curr < INT32_MIN/2 )
+          delta = (INT32_MAX - prev) + (curr - INT32_MIN);
+      else
+          delta = abs(curr - prev);
+    }/*
+    // It is correct version, and I like it
+    int64_t maxv = MAX(prev, curr), minv = MIN(prev, curr);
+    if ( maxv - minv > INT32_MAX )
+        delta = (INT32_MAX - maxv) + (minv - INT32_MIN);
     else
-        delta = bigger - smaller;
+        delta = maxv - minv;
+    */
     return (TO_RADS(delta) / delta_ts) * WHEEL_RADIUS;
 }
 
@@ -286,4 +306,15 @@ char getDigitFromDouble(double a, int pos)
         ans += ((int)(a * power(10, abs(pos)))) % 10;
     }
     return ans;
+}
+
+void help() {
+  Serial.println("1. <forward> - to go forward\n");
+  Serial.println("2. <backward> - to go backward\n");
+  Serial.println("3. <left> - to turn left\n");
+  Serial.println("4. <right> - to turn right\n");
+  Serial.println("5. <spinleft> - to spin left\n");
+  Serial.println("6. <spinright> - to spin right\n");
+  Serial.println("7. <stop> - to stop\n");
+  Serial.println("***Write command without '<' and '>'***\n");
 }

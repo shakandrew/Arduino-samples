@@ -53,6 +53,6 @@ By default time = 1000 (1s), so if you will run `delay 500`, it will start worki
 * add `case COMMAND:` to `switch(cmd->led_cmd)` in `loop()`
 
 
-## Sample 2.1:
 
-In progress.
+
+
