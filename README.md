@@ -1,8 +1,5 @@
 # Arduino samples
 Here you can find samples for Arduino Uno.
-
-Documentation is provided in the `documentation.pdf`
-
 ## Sample 1.1:
 You have 8 digit LED display. Digits have such a view:
 
